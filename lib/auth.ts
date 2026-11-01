@@ -7,6 +7,10 @@ import { loginSchema } from "@/lib/zodSchemas";
 import { checkRateLimit } from "@/lib/rateLimit";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  // NextAuth v5 looks for AUTH_SECRET by default; we document the var as
+  // NEXTAUTH_SECRET (the v4-era name), so wire both explicitly rather than
+  // relying on auto-detection picking the right one.
+  secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
   session: { strategy: "jwt" },
   pages: { signIn: "/login" },
   providers: [

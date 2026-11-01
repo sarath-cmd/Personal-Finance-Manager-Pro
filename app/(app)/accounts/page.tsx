@@ -1,0 +1,254 @@
+"use client";
+
+import { useEffect, useState, useCallback } from "react";
+import Modal from "@/components/ui/Modal";
+import PageHeader from "@/components/ui/PageHeader";
+import StatTile from "@/components/dashboard/StatTile";
+import { formatCurrency, ACCOUNT_TYPES } from "@/lib/constants";
+
+const TYPE_ICON: Record<string, string> = {
+  Checking: "💳",
+  Savings: "🐷",
+  Cash: "💵",
+  "Credit Card": "💳",
+  Investment: "📈",
+  Retirement: "🏖️",
+};
+
+type Account = {
+  _id: string;
+  name: string;
+  type: string;
+  institution?: string;
+  balance: number;
+};
+
+export default function AccountsPage() {
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [editing, setEditing] = useState<Account | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const res = await fetch("/api/accounts");
+    const data = await res.json();
+    setAccounts(data.accounts ?? []);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data fetch on mount
+    load();
+  }, [load]);
+
+  async function handleDelete(id: string) {
+    if (!confirm("Delete this account?")) return;
+    const res = await fetch(`/api/accounts/${id}`, { method: "DELETE" });
+    if (!res.ok) {
+      const data = await res.json();
+      alert(data.error || "Could not delete account");
+      return;
+    }
+    load();
+  }
+
+  const totalAssets = accounts
+    .filter((a) => a.type !== "Credit Card")
+    .reduce((s, a) => s + a.balance, 0);
+  const totalLiabilities = accounts
+    .filter((a) => a.type === "Credit Card")
+    .reduce((s, a) => s + a.balance, 0);
+
+  return (
+    <div>
+      <PageHeader
+        icon="🏦"
+        title="Accounts"
+        subtitle="Manually tracked accounts — no bank login or card numbers collected."
+        action={
+          <button
+            className="btn btn-gold"
+            onClick={() => {
+              setEditing(null);
+              setShowModal(true);
+            }}
+          >
+            + Add Account
+          </button>
+        }
+      />
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <StatTile label="Total Assets" value={formatCurrency(totalAssets)} tone="pos" icon="🏦" />
+        <StatTile label="Credit Card Balances" value={formatCurrency(totalLiabilities)} tone="neg" icon="💳" />
+        <StatTile label="Accounts" value={String(accounts.length)} tone="gold" icon="🔢" />
+      </div>
+
+      <div className="card">
+        {loading ? (
+          <p className="text-text-tertiary text-sm italic">Loading…</p>
+        ) : (
+          <div className="overflow-x-auto">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Account</th>
+                <th>Type</th>
+                <th>Institution</th>
+                <th>Balance</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {accounts.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="text-center italic text-text-tertiary py-7">
+                    No accounts yet.
+                  </td>
+                </tr>
+              )}
+              {accounts.map((a) => (
+                <tr key={a._id}>
+                  <td className="font-semibold text-text-primary">
+                    <div className="flex items-center gap-2.5">
+                      <span className={`icon-chip ${a.type === "Credit Card" ? "" : "gold"}`} style={{ width: "1.9rem", height: "1.9rem", fontSize: "0.9rem" }}>
+                        {TYPE_ICON[a.type] ?? "💼"}
+                      </span>
+                      {a.name}
+                    </div>
+                  </td>
+                  <td>
+                    <span className={`badge ${a.type === "Credit Card" ? "badge-expense" : "badge-info"}`}>{a.type}</span>
+                  </td>
+                  <td>{a.institution || "-"}</td>
+                  <td className={a.type === "Credit Card" ? "text-danger font-bold" : "font-bold text-success"}>
+                    {formatCurrency(a.balance)}
+                  </td>
+                  <td>
+                    <div className="flex gap-2">
+                      <button
+                        className="text-primary text-xs font-bold"
+                        onClick={() => {
+                          setEditing(a);
+                          setShowModal(true);
+                        }}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="btn btn-danger"
+                        onClick={() => handleDelete(a._id)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          </div>
+        )}
+      </div>
+
+      {showModal && (
+        <AccountFormModal
+          account={editing}
+          error={error}
+          onError={setError}
+          onClose={() => setShowModal(false)}
+          onSaved={() => {
+            setShowModal(false);
+            load();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function AccountFormModal({
+  account,
+  error,
+  onError,
+  onClose,
+  onSaved,
+}: {
+  account: Account | null;
+  error: string | null;
+  onError: (e: string | null) => void;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [name, setName] = useState(account?.name ?? "");
+  const [type, setType] = useState(account?.type ?? "Checking");
+  const [institution, setInstitution] = useState(account?.institution ?? "");
+  const [balance, setBalance] = useState(account ? String(account.balance) : "0");
+  const [saving, setSaving] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    onError(null);
+    setSaving(true);
+
+    const payload: Record<string, unknown> = { name, type, institution };
+    if (!account) payload.balance = Number(balance);
+
+    const res = await fetch(account ? `/api/accounts/${account._id}` : "/api/accounts", {
+      method: account ? "PATCH" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    setSaving(false);
+    if (!res.ok) {
+      onError(data.error || "Something went wrong");
+      return;
+    }
+    onSaved();
+  }
+
+  return (
+    <Modal title={account ? "Edit Account" : "Add Account"} onClose={onClose}>
+      <form onSubmit={handleSubmit}>
+        {error && <p className="text-sm text-danger font-semibold mb-3">{error}</p>}
+        <div className="mb-4">
+          <label className="form-label">Name</label>
+          <input className="form-input" value={name} onChange={(e) => setName(e.target.value)} required />
+        </div>
+        <div className="mb-4">
+          <label className="form-label">Type</label>
+          <select className="form-select" value={type} onChange={(e) => setType(e.target.value)}>
+            {ACCOUNT_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="mb-4">
+          <label className="form-label">Institution (optional)</label>
+          <input className="form-input" value={institution} onChange={(e) => setInstitution(e.target.value)} />
+        </div>
+        {!account && (
+          <div className="mb-4">
+            <label className="form-label">Opening Balance (₹)</label>
+            <input
+              type="number"
+              step="0.01"
+              className="form-input"
+              value={balance}
+              onChange={(e) => setBalance(e.target.value)}
+              required
+            />
+          </div>
+        )}
+        <button className="btn btn-primary w-full justify-center" disabled={saving}>
+          {saving ? "Saving…" : "💾 Save Account"}
+        </button>
+      </form>
+    </Modal>
+  );
+}

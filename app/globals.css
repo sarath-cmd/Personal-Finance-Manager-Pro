@@ -1,26 +1,500 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --primary: #0e7c66;
+  --primary-light: #14a085;
+  --primary-dark: #095c4b;
+  --gold: #c9a15a;
+  --gold-light: #e2c07f;
+  --gold-dark: #a9803f;
+  --success: #059669;
+  --success-light: #10b981;
+  --warning: #d97706;
+  --warning-light: #f59e0b;
+  --danger: #dc2626;
+  --danger-light: #ef4444;
+  --info: #0891b2;
+  --sidebar-a: #111827;
+  --sidebar-b: #0a0f1a;
+  --light-bg: #faf7f2;
+  --border-color: #e7e3da;
+  --text-primary: #1c1a17;
+  --text-secondary: #6b6459;
+  --text-tertiary: #a39c8e;
+  --card-bg: #ffffff;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  :root:not([data-theme="light"]) {
+    --light-bg: #0b0f14;
+    --border-color: #232a33;
+    --card-bg: #151b23;
+    --text-primary: #f1efe9;
+    --text-secondary: #b9b2a4;
+    --text-tertiary: #867e70;
   }
 }
 
+:root[data-theme="dark"] {
+  --light-bg: #0b0f14;
+  --border-color: #232a33;
+  --card-bg: #151b23;
+  --text-primary: #f1efe9;
+  --text-secondary: #b9b2a4;
+  --text-tertiary: #867e70;
+}
+
+@theme inline {
+  --color-primary: var(--primary);
+  --color-primary-light: var(--primary-light);
+  --color-primary-dark: var(--primary-dark);
+  --color-gold: var(--gold);
+  --color-gold-light: var(--gold-light);
+  --color-gold-dark: var(--gold-dark);
+  --color-success: var(--success);
+  --color-success-light: var(--success-light);
+  --color-warning: var(--warning);
+  --color-warning-light: var(--warning-light);
+  --color-danger: var(--danger);
+  --color-danger-light: var(--danger-light);
+  --color-info: var(--info);
+  --color-light-bg: var(--light-bg);
+  --color-border-color: var(--border-color);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-card-bg: var(--card-bg);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--light-bg);
+  color: var(--text-primary);
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+}
+
+/* Themed scrollbars — match the app instead of the browser default. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--text-tertiary) transparent;
+}
+*::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--text-tertiary);
+  border-radius: 999px;
+  border: 2px solid var(--light-bg);
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+  background-clip: padding-box;
+}
+
+/* The sidebar is always a dark navy panel regardless of light/dark mode,
+   so its scrollbar needs its own (always-light-on-dark) treatment. */
+.sidebar-scroll {
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+}
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: var(--sidebar-b);
+}
+.sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+/* A soft wash of color behind the app shell instead of a flat background. */
+.app-bg {
+  background:
+    radial-gradient(900px 500px at 100% -10%, rgba(14, 124, 102, 0.1), transparent 60%),
+    radial-gradient(700px 500px at -10% 110%, rgba(201, 161, 90, 0.12), transparent 55%),
+    var(--light-bg);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .app-bg {
+    background:
+      radial-gradient(900px 500px at 100% -10%, rgba(20, 160, 133, 0.16), transparent 60%),
+      radial-gradient(700px 500px at -10% 110%, rgba(201, 161, 90, 0.1), transparent 55%),
+      var(--light-bg);
+  }
+}
+:root[data-theme="dark"] .app-bg {
+  background:
+    radial-gradient(900px 500px at 100% -10%, rgba(20, 160, 133, 0.16), transparent 60%),
+    radial-gradient(700px 500px at -10% 110%, rgba(201, 161, 90, 0.1), transparent 55%),
+    var(--light-bg);
+}
+
+@layer components {
+  .sidebar {
+    background: linear-gradient(180deg, var(--sidebar-a), var(--sidebar-b));
+    color: #fff;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  /* Matches the sidebar's current (possibly user-resized) width — only
+     applied at lg+ where the sidebar is a static column, not a drawer. */
+  .app-content {
+    margin-left: 0;
+  }
+  @media (min-width: 1024px) {
+    .app-content {
+      margin-left: var(--sidebar-width, 260px);
+    }
+  }
+
+  .sidebar-resize-handle {
+    position: absolute;
+    top: 0;
+    right: -3px;
+    width: 6px;
+    height: 100%;
+    cursor: col-resize;
+    z-index: 10;
+  }
+  .sidebar-resize-handle::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 2px;
+    width: 2px;
+    height: 100%;
+    background: transparent;
+    transition: background 0.15s ease;
+  }
+  .sidebar-resize-handle:hover::after,
+  .sidebar-resize-handle.active::after {
+    background: var(--gold-dark);
+  }
+
+  .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.6rem 0.6rem;
+    color: rgba(255, 255, 255, 0.55);
+    text-decoration: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+  .nav-link:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+  }
+  .nav-link.active {
+    background: linear-gradient(135deg, var(--gold-light), var(--gold-dark));
+    color: #241a08;
+    font-weight: 700;
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.25);
+  }
+
+  .topbar {
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .month-btn {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 8px;
+    border: 1.5px solid var(--border-color);
+    background: var(--card-bg);
+    color: var(--text-primary);
+  }
+  .month-btn:hover {
+    background: var(--light-bg);
+  }
+
+  .card {
+    background: var(--card-bg);
+    border-radius: 14px;
+    padding: 2rem;
+    margin-bottom: 1.75rem;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+  }
+
+  .stat-tile {
+    position: relative;
+    background: var(--card-bg);
+    padding: 1.15rem 1.3rem 1.15rem 1.5rem;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.9rem;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .stat-tile:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+  .stat-tile::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(180deg, var(--primary-light), var(--primary-dark));
+  }
+  .stat-tile.tone-success::before {
+    background: linear-gradient(180deg, var(--success-light), var(--success));
+  }
+  .stat-tile.tone-danger::before {
+    background: linear-gradient(180deg, var(--danger-light), var(--danger));
+  }
+  .stat-tile.tone-gold::before {
+    background: linear-gradient(180deg, var(--gold-light), var(--gold-dark));
+  }
+  .stat-tile.tone-info::before {
+    background: linear-gradient(180deg, var(--info), var(--primary-dark));
+  }
+
+  .stat-icon {
+    flex-shrink: 0;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    background: linear-gradient(135deg, var(--primary-light), var(--primary-dark));
+    box-shadow: 0 4px 10px rgba(14, 124, 102, 0.3);
+  }
+  .stat-tile.tone-success .stat-icon {
+    background: linear-gradient(135deg, var(--success-light), var(--success));
+    box-shadow: 0 4px 10px rgba(5, 150, 105, 0.3);
+  }
+  .stat-tile.tone-danger .stat-icon {
+    background: linear-gradient(135deg, var(--danger-light), var(--danger));
+    box-shadow: 0 4px 10px rgba(220, 38, 38, 0.3);
+  }
+  .stat-tile.tone-gold .stat-icon {
+    background: linear-gradient(135deg, var(--gold-light), var(--gold-dark));
+    box-shadow: 0 4px 10px rgba(201, 161, 90, 0.35);
+  }
+  .stat-tile.tone-info .stat-icon {
+    background: linear-gradient(135deg, var(--info), var(--primary-dark));
+    box-shadow: 0 4px 10px rgba(8, 145, 178, 0.3);
+  }
+
+  .stat-tile-label {
+    font-size: 0.6875rem;
+    font-weight: 800;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.4rem;
+  }
+  .stat-tile-value {
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+  }
+  .stat-tile-value.pos {
+    color: var(--success);
+  }
+  .stat-tile-value.neg {
+    color: var(--danger);
+  }
+
+  .btn {
+    padding: 0.8rem 1.6rem;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: transform 0.15s ease;
+  }
+  .btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--primary-light), var(--primary-dark));
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(14, 124, 102, 0.25);
+  }
+  .btn-primary:hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
+  .btn-gold {
+    background: linear-gradient(135deg, var(--gold-light), var(--gold-dark));
+    color: #241a08;
+    box-shadow: 0 4px 14px rgba(201, 161, 90, 0.35);
+  }
+  .btn-secondary {
+    background: var(--text-secondary);
+    color: #fff;
+  }
+  .btn-danger {
+    background: var(--danger);
+    color: #fff;
+    padding: 0.45rem 0.9rem;
+    font-size: 0.75rem;
+  }
+
+  .form-input,
+  .form-select {
+    width: 100%;
+    padding: 0.8rem 0.9rem;
+    border: 1.5px solid var(--border-color);
+    border-radius: 10px;
+    font-size: 0.875rem;
+    background: var(--card-bg);
+    color: var(--text-primary);
+  }
+  .form-input:focus,
+  .form-select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(14, 124, 102, 0.12);
+  }
+  .form-label {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 0.55rem;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+  }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .data-table th {
+    background: var(--light-bg);
+    padding: 0.9rem 0.85rem;
+    text-align: left;
+    font-weight: 800;
+    border-bottom: 2px solid var(--border-color);
+    color: var(--text-primary);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .data-table td {
+    padding: 0.9rem 0.85rem;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+  }
+  .data-table tbody tr:hover {
+    background: rgba(14, 124, 102, 0.04);
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 0.4rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .badge-income {
+    background: rgba(5, 150, 105, 0.15);
+    color: var(--success);
+  }
+  .badge-expense {
+    background: rgba(220, 38, 38, 0.15);
+    color: var(--danger);
+  }
+  .badge-gold {
+    background: rgba(201, 161, 90, 0.18);
+    color: var(--gold-dark);
+  }
+  .badge-info {
+    background: rgba(8, 145, 178, 0.15);
+    color: var(--info);
+  }
+
+  .icon-chip {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, var(--primary-light), var(--primary-dark));
+    box-shadow: 0 4px 10px rgba(14, 124, 102, 0.3);
+  }
+  .icon-chip.gold {
+    background: linear-gradient(135deg, var(--gold-light), var(--gold-dark));
+    box-shadow: 0 4px 10px rgba(201, 161, 90, 0.35);
+  }
+
+  .page-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, var(--primary-light), var(--primary-dark));
+    box-shadow: 0 6px 16px rgba(14, 124, 102, 0.3);
+  }
+
+  .text-gradient-gold {
+    background: linear-gradient(135deg, var(--gold-light), var(--gold-dark));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 10, 10, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    z-index: 100;
+  }
+  .modal-box {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 1.25rem;
+    width: 100%;
+    max-width: 460px;
+    box-shadow: var(--shadow-lg);
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  @media (min-width: 640px) {
+    .modal-box {
+      padding: 1.75rem;
+    }
+  }
 }

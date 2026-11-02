@@ -42,10 +42,7 @@ const NAV_GROUPS = [
   },
   {
     label: "Savings",
-    items: [
-      { href: "/savings", icon: "🐷", text: "Savings", color: "#059669" },
-      { href: "/savings/goals", icon: "🎯", text: "Savings Goals", color: "#059669" },
-    ],
+    items: [{ href: "/savings", icon: "🐷", text: "Savings", color: "#059669" }],
   },
   {
     label: "Lending",

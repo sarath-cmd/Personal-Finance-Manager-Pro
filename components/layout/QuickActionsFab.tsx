@@ -8,17 +8,75 @@ type Action = {
   key: string;
   icon: string;
   label: string;
+  gradient: string;
+  glow: string;
   href?: string;
 };
 
 const ACTIONS: Action[] = [
-  { key: "transaction", icon: "💸", label: "Transaction" },
-  { key: "account", icon: "🏦", label: "Account", href: "/accounts?new=1" },
-  { key: "bill", icon: "📑", label: "Bill", href: "/bills?new=1" },
-  { key: "goal", icon: "🎯", label: "Savings Goal", href: "/savings/goals?new=1" },
-  { key: "debt", icon: "💳", label: "Debt", href: "/debt?new=1" },
-  { key: "person", icon: "🤝", label: "Lent/Borrowed", href: "/lending?new=1" },
-  { key: "task", icon: "✅", label: "Task", href: "/today?new=1" },
+  {
+    key: "transaction",
+    icon: "💸",
+    label: "Transaction",
+    gradient: "linear-gradient(135deg, var(--primary-light), var(--primary-dark))",
+    glow: "rgba(14, 124, 102, 0.35)",
+  },
+  {
+    key: "account",
+    icon: "🏦",
+    label: "Account",
+    href: "/accounts?new=1",
+    gradient: "linear-gradient(135deg, #22abc4, var(--info))",
+    glow: "rgba(8, 145, 178, 0.35)",
+  },
+  {
+    key: "transfer",
+    icon: "⇄",
+    label: "Transfer",
+    href: "/accounts?new=transfer",
+    gradient: "linear-gradient(135deg, #22abc4, var(--info))",
+    glow: "rgba(8, 145, 178, 0.35)",
+  },
+  {
+    key: "bill",
+    icon: "📑",
+    label: "Bill",
+    href: "/bills?new=1",
+    gradient: "linear-gradient(135deg, var(--gold-light), var(--gold-dark))",
+    glow: "rgba(201, 161, 90, 0.35)",
+  },
+  {
+    key: "goal",
+    icon: "🎯",
+    label: "Savings Goal",
+    href: "/savings?new=1",
+    gradient: "linear-gradient(135deg, var(--success-light), var(--success))",
+    glow: "rgba(5, 150, 105, 0.35)",
+  },
+  {
+    key: "debt",
+    icon: "💳",
+    label: "Debt",
+    href: "/debt?new=1",
+    gradient: "linear-gradient(135deg, var(--danger-light), var(--danger))",
+    glow: "rgba(220, 38, 38, 0.35)",
+  },
+  {
+    key: "person",
+    icon: "🤝",
+    label: "Lent/Borrowed",
+    href: "/lending?new=1",
+    gradient: "linear-gradient(135deg, var(--gold-light), var(--gold-dark))",
+    glow: "rgba(201, 161, 90, 0.35)",
+  },
+  {
+    key: "task",
+    icon: "✅",
+    label: "Task",
+    href: "/today?new=1",
+    gradient: "linear-gradient(135deg, var(--primary-light), var(--primary-dark))",
+    glow: "rgba(14, 124, 102, 0.35)",
+  },
 ];
 
 export default function QuickActionsFab() {
@@ -62,24 +120,50 @@ export default function QuickActionsFab() {
           />
         )}
 
-        <div className="relative flex flex-col items-end gap-2">
+        <div className="relative flex flex-col items-end gap-3">
           {open && (
-            <div className="flex flex-col items-stretch gap-1.5 mb-1 animate-[fab-pop_0.15s_ease-out]">
-              {ACTIONS.map((a) => (
+            <div
+              className="w-72 rounded-2xl p-4 animate-[fab-pop_0.15s_ease-out]"
+              style={{
+                background: "var(--card-bg)",
+                border: "1px solid var(--border-color)",
+                boxShadow: "var(--shadow-lg)",
+              }}
+            >
+              <div className="flex items-center justify-between mb-3.5 px-0.5">
+                <div>
+                  <div className="text-sm font-extrabold text-text-primary">Quick Add</div>
+                  <div className="text-xs text-text-tertiary">Jump straight to creating something</div>
+                </div>
                 <button
-                  key={a.key}
                   type="button"
-                  onClick={() => handleAction(a)}
-                  className="flex items-center gap-2.5 pl-3.5 pr-4 py-2.5 rounded-full shadow-lg text-sm font-semibold text-white whitespace-nowrap hover:brightness-110 transition"
-                  style={{
-                    background: "linear-gradient(135deg, var(--primary-light), var(--primary-dark))",
-                    boxShadow: "var(--shadow-md)",
-                  }}
+                  aria-label="Close quick actions"
+                  onClick={() => setOpen(false)}
+                  className="w-6 h-6 rounded-full flex items-center justify-center text-text-tertiary hover:text-text-primary hover:bg-light-bg transition flex-shrink-0"
                 >
-                  <span className="text-base leading-none">{a.icon}</span>
-                  {a.label}
+                  ×
                 </button>
-              ))}
+              </div>
+
+              <div className="grid grid-cols-2 gap-2.5">
+                {ACTIONS.map((a) => (
+                  <button
+                    key={a.key}
+                    type="button"
+                    onClick={() => handleAction(a)}
+                    className="flex flex-col items-center gap-2 py-3.5 px-2 rounded-xl text-center transition-colors hover:bg-light-bg"
+                    style={{ border: "1px solid var(--border-color)" }}
+                  >
+                    <span
+                      className="w-10 h-10 rounded-full flex items-center justify-center text-lg flex-shrink-0"
+                      style={{ background: a.gradient, boxShadow: `0 4px 10px ${a.glow}` }}
+                    >
+                      {a.icon}
+                    </span>
+                    <span className="text-xs font-bold text-text-primary leading-tight">{a.label}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 

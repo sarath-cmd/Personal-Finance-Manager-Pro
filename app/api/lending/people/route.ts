@@ -13,17 +13,18 @@ export async function GET() {
     await dbConnect();
     const uid = new Types.ObjectId(userId);
 
-    const people = await LendingPerson.find({ userId }).sort({ createdAt: 1 }).lean();
-
-    const balances = await LendingEntry.aggregate([
-      { $match: { userId: uid } },
-      {
-        $group: {
-          _id: "$personId",
-          lent: { $sum: { $cond: [{ $eq: ["$type", "lent"] }, "$amount", 0] } },
-          returned: { $sum: { $cond: [{ $eq: ["$type", "returned"] }, "$amount", 0] } },
+    const [people, balances] = await Promise.all([
+      LendingPerson.find({ userId }).sort({ createdAt: 1 }).lean(),
+      LendingEntry.aggregate([
+        { $match: { userId: uid } },
+        {
+          $group: {
+            _id: "$personId",
+            lent: { $sum: { $cond: [{ $eq: ["$type", "lent"] }, "$amount", 0] } },
+            returned: { $sum: { $cond: [{ $eq: ["$type", "returned"] }, "$amount", 0] } },
+          },
         },
-      },
+      ]),
     ]);
 
     const balanceByPerson = new Map(

@@ -79,6 +79,38 @@ export const transactionQuerySchema = z.object({
   category: z.string().trim().max(100).optional(),
 });
 
+// ---------- Transfers (between the user's own accounts) ----------
+
+export const transferInputSchema = z
+  .object({
+    date: dateSchema,
+    fromAccountId: objectId,
+    toAccountId: objectId,
+    amount: z.number().positive().max(1_000_000_000),
+    note: z.string().trim().max(500).optional().default(""),
+  })
+  .refine((data) => data.fromAccountId !== data.toAccountId, {
+    message: "Choose two different accounts",
+    path: ["toAccountId"],
+  });
+
+export const transferPatchSchema = z
+  .object({
+    date: dateSchema.optional(),
+    fromAccountId: objectId.optional(),
+    toAccountId: objectId.optional(),
+    amount: z.number().positive().max(1_000_000_000).optional(),
+    note: z.string().trim().max(500).optional(),
+  })
+  .refine((data) => !data.fromAccountId || !data.toAccountId || data.fromAccountId !== data.toAccountId, {
+    message: "Choose two different accounts",
+    path: ["toAccountId"],
+  });
+
+export const transferQuerySchema = z.object({
+  month: monthQuerySchema,
+});
+
 export const lendingGroupInputSchema = z.object({
   name: z.string().trim().min(1).max(100),
   note: z.string().trim().max(500).optional().default(""),

@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
     await dbConnect();
     const uid = new Types.ObjectId(userId);
 
-    const [totals, priorExpense, netWorthRows, budgetRows, debts, debtPaymentRows, note] = await Promise.all([
+    const [totals, priorExpense, netWorthRows, budgetRows, debts, debtPaymentRows, note, debtPaymentsThisMonth] = await Promise.all([
       Transaction.aggregate([
         { $match: { userId: uid, date: { $gte: start, $lt: end } } },
         { $group: { _id: "$type", total: { $sum: "$amount" } } },
@@ -54,6 +54,10 @@ export async function GET(req: NextRequest) {
       Debt.find({ userId }).lean(),
       DebtPayment.aggregate([{ $match: { userId: uid } }, { $group: { _id: "$debtId", total: { $sum: "$amount" } } }]),
       SnapshotNote.findOne({ userId, month }).lean(),
+      DebtPayment.aggregate([
+        { $match: { userId: uid, date: { $gte: start, $lt: end } } },
+        { $group: { _id: null, total: { $sum: "$amount" } } },
+      ]),
     ]);
 
     const income = totals.find((t) => t._id === "income")?.total ?? 0;
@@ -67,11 +71,6 @@ export async function GET(req: NextRequest) {
       (sum, d) => sum + Math.max(d.openingBalance - (paidByDebt.get(String(d._id)) ?? 0), 0),
       0
     );
-
-    const debtPaymentsThisMonth = await DebtPayment.aggregate([
-      { $match: { userId: uid, date: { $gte: start, $lt: end } } },
-      { $group: { _id: null, total: { $sum: "$amount" } } },
-    ]);
 
     return NextResponse.json({
       month,

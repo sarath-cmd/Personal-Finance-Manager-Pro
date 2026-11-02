@@ -12,11 +12,12 @@ export async function GET() {
     await dbConnect();
     const uid = new Types.ObjectId(userId);
 
-    const goals = await SavingsGoal.find({ userId }).sort({ createdAt: 1 }).lean();
-
-    const totals = await SavingsContribution.aggregate([
-      { $match: { userId: uid } },
-      { $group: { _id: "$goalId", total: { $sum: "$amount" } } },
+    const [goals, totals] = await Promise.all([
+      SavingsGoal.find({ userId }).sort({ createdAt: 1 }).lean(),
+      SavingsContribution.aggregate([
+        { $match: { userId: uid } },
+        { $group: { _id: "$goalId", total: { $sum: "$amount" } } },
+      ]),
     ]);
     const totalByGoal = new Map(totals.map((t) => [String(t._id), t.total]));
 

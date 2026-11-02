@@ -22,42 +22,41 @@ export async function GET(req: NextRequest) {
 
     const uid = new Types.ObjectId(userId);
 
-    const totals = await Transaction.aggregate([
-      { $match: { userId: uid, date: { $gte: start, $lt: end } } },
-      { $group: { _id: "$type", total: { $sum: "$amount" } } },
-    ]);
-
-    const income = totals.find((t) => t._id === "income")?.total ?? 0;
-    const expense = totals.find((t) => t._id === "expense")?.total ?? 0;
-
-    const recentTransactions = await Transaction.find({ userId, date: { $gte: start, $lt: end } })
-      .sort({ date: -1, createdAt: -1 })
-      .limit(10)
-      .lean();
-
-    const netWorth = await Account.aggregate([
-      { $match: { userId: uid } },
-      {
-        $group: {
-          _id: null,
-          assets: {
-            $sum: {
-              $cond: [{ $ne: ["$type", "Credit Card"] }, "$balance", 0],
+    const [
+      totals,
+      recentTransactions,
+      netWorth,
+      savingsRows,
+      debts,
+      debtPaidRows,
+      debtPaidThisMonthRows,
+    ] = await Promise.all([
+      Transaction.aggregate([
+        { $match: { userId: uid, date: { $gte: start, $lt: end } } },
+        { $group: { _id: "$type", total: { $sum: "$amount" } } },
+      ]),
+      Transaction.find({ userId, date: { $gte: start, $lt: end } })
+        .sort({ date: -1, createdAt: -1 })
+        .limit(10)
+        .lean(),
+      Account.aggregate([
+        { $match: { userId: uid } },
+        {
+          $group: {
+            _id: null,
+            assets: {
+              $sum: {
+                $cond: [{ $ne: ["$type", "Credit Card"] }, "$balance", 0],
+              },
             },
-          },
-          liabilities: {
-            $sum: {
-              $cond: [{ $eq: ["$type", "Credit Card"] }, "$balance", 0],
+            liabilities: {
+              $sum: {
+                $cond: [{ $eq: ["$type", "Credit Card"] }, "$balance", 0],
+              },
             },
           },
         },
-      },
-    ]);
-
-    const assets = netWorth[0]?.assets ?? 0;
-    const liabilities = netWorth[0]?.liabilities ?? 0;
-
-    const [savingsRows, debts, debtPaidRows] = await Promise.all([
+      ]),
       SavingsContribution.aggregate([
         { $match: { userId: uid, date: { $gte: start, $lt: end } } },
         { $group: { _id: null, total: { $sum: "$amount" } } },
@@ -67,17 +66,22 @@ export async function GET(req: NextRequest) {
         { $match: { userId: uid } },
         { $group: { _id: "$debtId", total: { $sum: "$amount" } } },
       ]),
+      DebtPayment.aggregate([
+        { $match: { userId: uid, date: { $gte: start, $lt: end } } },
+        { $group: { _id: null, total: { $sum: "$amount" } } },
+      ]),
     ]);
+
+    const income = totals.find((t) => t._id === "income")?.total ?? 0;
+    const expense = totals.find((t) => t._id === "expense")?.total ?? 0;
+    const assets = netWorth[0]?.assets ?? 0;
+    const liabilities = netWorth[0]?.liabilities ?? 0;
 
     const paidByDebt = new Map(debtPaidRows.map((r) => [String(r._id), r.total]));
     const debtRemaining = debts.reduce(
       (sum, d) => sum + Math.max(d.openingBalance - (paidByDebt.get(String(d._id)) ?? 0), 0),
       0
     );
-    const debtPaidThisMonthRows = await DebtPayment.aggregate([
-      { $match: { userId: uid, date: { $gte: start, $lt: end } } },
-      { $group: { _id: null, total: { $sum: "$amount" } } },
-    ]);
 
     return NextResponse.json({
       month,

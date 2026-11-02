@@ -5,8 +5,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Modal from "@/components/ui/Modal";
 import PageHeader from "@/components/ui/PageHeader";
 import StatTile from "@/components/dashboard/StatTile";
+import TransferFormModal, { type Transfer } from "@/components/accounts/TransferFormModal";
 import { SkeletonTableRows } from "@/components/ui/Skeleton";
-import { formatCurrency, ACCOUNT_TYPES } from "@/lib/constants";
+import { formatCurrency, formatDate, ACCOUNT_TYPES } from "@/lib/constants";
 
 const TYPE_ICON: Record<string, string> = {
   Checking: "💳",
@@ -28,30 +29,46 @@ type Account = {
 function Inner() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const month = searchParams.get("month") ?? "";
   const [accounts, setAccounts] = useState<Account[]>([]);
+  const [transfers, setTransfers] = useState<Transfer[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<Account | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [editingTransfer, setEditingTransfer] = useState<Transfer | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const res = await fetch("/api/accounts");
-    const data = await res.json();
-    setAccounts(data.accounts ?? []);
+    const params = new URLSearchParams();
+    if (month) params.set("month", month);
+    const [acctRes, transferRes] = await Promise.all([
+      fetch("/api/accounts"),
+      fetch(`/api/transfers?${params.toString()}`),
+    ]);
+    const acctData = await acctRes.json();
+    const transferData = await transferRes.json();
+    setAccounts(acctData.accounts ?? []);
+    setTransfers(transferData.transfers ?? []);
     setLoading(false);
-  }, []);
+  }, [month]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data fetch on mount
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- data fetch synced to the month param
     load();
   }, [load]);
 
   useEffect(() => {
-    if (searchParams.get("new") === "1") {
+    const flag = searchParams.get("new");
+    if (flag === "1") {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- opening the quick-add modal from a URL flag set by the global FAB
       setEditing(null);
       setShowModal(true);
+      router.replace("/accounts");
+    } else if (flag === "transfer") {
+      setEditingTransfer(null);
+      setShowTransferModal(true);
       router.replace("/accounts");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only run when the `new` param changes
@@ -68,6 +85,19 @@ function Inner() {
     load();
   }
 
+  async function handleDeleteTransfer(id: string) {
+    if (!confirm("Delete this transfer? Both account balances will be reversed.")) return;
+    const res = await fetch(`/api/transfers/${id}`, { method: "DELETE" });
+    if (!res.ok) {
+      const data = await res.json();
+      alert(data.error || "Could not delete transfer");
+      return;
+    }
+    load();
+  }
+
+  const accountById = new Map(accounts.map((a) => [a._id, a]));
+
   const totalAssets = accounts
     .filter((a) => a.type !== "Credit Card")
     .reduce((s, a) => s + a.balance, 0);
@@ -82,15 +112,27 @@ function Inner() {
         title="Accounts"
         subtitle="Manually tracked accounts — no bank login or card numbers collected."
         action={
-          <button
-            className="btn btn-gold"
-            onClick={() => {
-              setEditing(null);
-              setShowModal(true);
-            }}
-          >
-            + Add Account
-          </button>
+          <div className="flex gap-2">
+            <button
+              className="btn btn-secondary"
+              onClick={() => {
+                setEditingTransfer(null);
+                setShowTransferModal(true);
+              }}
+              disabled={accounts.length < 2}
+            >
+              ⇄ Transfer
+            </button>
+            <button
+              className="btn btn-gold"
+              onClick={() => {
+                setEditing(null);
+                setShowModal(true);
+              }}
+            >
+              + Add Account
+            </button>
+          </div>
         }
       />
 
@@ -164,6 +206,66 @@ function Inner() {
         </div>
       </div>
 
+      <div className="card">
+        <h2 className="font-extrabold text-text-primary mb-5 flex items-center gap-2">
+          <span className="icon-chip">⇄</span>
+          Transfers This Month
+        </h2>
+        <div className="overflow-x-auto">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>From</th>
+                <th>To</th>
+                <th>Amount</th>
+                <th>Note</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading && <SkeletonTableRows rows={3} cols={6} />}
+              {!loading && transfers.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="text-center italic text-text-tertiary py-7">
+                    No transfers this month yet.
+                  </td>
+                </tr>
+              )}
+              {!loading && transfers.map((t) => (
+                <tr key={t._id}>
+                  <td>{formatDate(t.date)}</td>
+                  <td className="font-semibold text-text-primary">
+                    {accountById.get(t.fromAccountId)?.name ?? "—"}
+                  </td>
+                  <td className="font-semibold text-text-primary">
+                    {accountById.get(t.toAccountId)?.name ?? "—"}
+                  </td>
+                  <td className="font-bold text-text-primary">{formatCurrency(t.amount)}</td>
+                  <td>{t.note || "-"}</td>
+                  <td>
+                    <div className="flex gap-2">
+                      <button
+                        className="text-primary text-xs font-bold"
+                        onClick={() => {
+                          setEditingTransfer(t);
+                          setShowTransferModal(true);
+                        }}
+                      >
+                        Edit
+                      </button>
+                      <button className="btn btn-danger" onClick={() => handleDeleteTransfer(t._id)}>
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       {showModal && (
         <AccountFormModal
           account={editing}
@@ -172,6 +274,18 @@ function Inner() {
           onClose={() => setShowModal(false)}
           onSaved={() => {
             setShowModal(false);
+            load();
+          }}
+        />
+      )}
+
+      {showTransferModal && (
+        <TransferFormModal
+          transfer={editingTransfer}
+          accounts={accounts}
+          onClose={() => setShowTransferModal(false)}
+          onSaved={() => {
+            setShowTransferModal(false);
             load();
           }}
         />

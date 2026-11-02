@@ -12,11 +12,12 @@ export async function GET() {
     await dbConnect();
     const uid = new Types.ObjectId(userId);
 
-    const debts = await Debt.find({ userId }).sort({ createdAt: 1 }).lean();
-
-    const totals = await DebtPayment.aggregate([
-      { $match: { userId: uid } },
-      { $group: { _id: "$debtId", total: { $sum: "$amount" } } },
+    const [debts, totals] = await Promise.all([
+      Debt.find({ userId }).sort({ createdAt: 1 }).lean(),
+      DebtPayment.aggregate([
+        { $match: { userId: uid } },
+        { $group: { _id: "$debtId", total: { $sum: "$amount" } } },
+      ]),
     ]);
     const paidByDebt = new Map(totals.map((t) => [String(t._id), t.total]));
 

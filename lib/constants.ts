@@ -57,6 +57,28 @@ export const SAVINGS_GOAL_KIND_LABELS: Record<(typeof SAVINGS_GOAL_KINDS)[number
   emergency_fund: "Emergency Fund",
 };
 
+export const INVESTMENT_KINDS = ["gold", "silver", "sip"] as const;
+
+export const INVESTMENT_KIND_LABELS: Record<(typeof INVESTMENT_KINDS)[number], string> = {
+  gold: "Gold",
+  silver: "Silver",
+  sip: "SIP",
+};
+
+export const INVESTMENT_KIND_ICONS: Record<(typeof INVESTMENT_KINDS)[number], string> = {
+  gold: "🥇",
+  silver: "🥈",
+  sip: "📈",
+};
+
+// Gold/silver are usually bought by weight; SIPs by fund units — label the
+// optional quantity field accordingly instead of a generic "quantity".
+export const INVESTMENT_KIND_QUANTITY_LABELS: Record<(typeof INVESTMENT_KINDS)[number], string> = {
+  gold: "Grams (optional)",
+  silver: "Grams (optional)",
+  sip: "Units (optional)",
+};
+
 export const TAG_PALETTE = [
   "#0e7c66",
   "#c9a15a",

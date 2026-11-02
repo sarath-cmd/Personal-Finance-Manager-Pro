@@ -50,7 +50,10 @@ const NAV_GROUPS = [
   },
   {
     label: "Wealth",
-    items: [{ href: "/debt", icon: "💳", text: "Debt Payoff", color: "#8b5cf6" }],
+    items: [
+      { href: "/investments", icon: "💰", text: "Investments", color: "#c9a15a" },
+      { href: "/debt", icon: "💳", text: "Debt Payoff", color: "#8b5cf6" },
+    ],
   },
   {
     label: "System",

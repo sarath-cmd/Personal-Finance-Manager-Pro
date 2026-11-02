@@ -44,18 +44,18 @@ export async function PATCH(
         }
 
         // Revert the previously applied balance effect on both accounts.
-        await Promise.all([
-          Account.updateOne(
-            { _id: existing.fromAccountId },
-            { $inc: { balance: -existing.appliedFromDelta } },
-            { session: mongoSession }
-          ),
-          Account.updateOne(
-            { _id: existing.toAccountId },
-            { $inc: { balance: -existing.appliedToDelta } },
-            { session: mongoSession }
-          ),
-        ]);
+        // A single ClientSession can only have one operation in flight at a
+        // time, so these must run sequentially, not via Promise.all.
+        await Account.updateOne(
+          { _id: existing.fromAccountId },
+          { $inc: { balance: -existing.appliedFromDelta } },
+          { session: mongoSession }
+        );
+        await Account.updateOne(
+          { _id: existing.toAccountId },
+          { $inc: { balance: -existing.appliedToDelta } },
+          { session: mongoSession }
+        );
 
         const merged = {
           date: patch.date ? new Date(`${patch.date}T00:00:00.000Z`) : existing.date,
@@ -70,10 +70,12 @@ export async function PATCH(
           return;
         }
 
-        const [fromAccount, toAccount] = await Promise.all([
-          Account.findOne({ _id: merged.fromAccountId, userId }, null, { session: mongoSession }),
-          Account.findOne({ _id: merged.toAccountId, userId }, null, { session: mongoSession }),
-        ]);
+        const fromAccount = await Account.findOne({ _id: merged.fromAccountId, userId }, null, {
+          session: mongoSession,
+        });
+        const toAccount = await Account.findOne({ _id: merged.toAccountId, userId }, null, {
+          session: mongoSession,
+        });
         if (!fromAccount || !toAccount) {
           accountNotFound = true;
           return;
@@ -82,10 +84,8 @@ export async function PATCH(
         const fromDelta = txDelta({ type: "expense", amount: merged.amount }, fromAccount);
         const toDelta = txDelta({ type: "income", amount: merged.amount, status: "Received" }, toAccount);
 
-        await Promise.all([
-          Account.updateOne({ _id: fromAccount._id }, { $inc: { balance: fromDelta } }, { session: mongoSession }),
-          Account.updateOne({ _id: toAccount._id }, { $inc: { balance: toDelta } }, { session: mongoSession }),
-        ]);
+        await Account.updateOne({ _id: fromAccount._id }, { $inc: { balance: fromDelta } }, { session: mongoSession });
+        await Account.updateOne({ _id: toAccount._id }, { $inc: { balance: toDelta } }, { session: mongoSession });
 
         existing.set({
           date: merged.date,
@@ -145,18 +145,16 @@ export async function DELETE(
           return;
         }
 
-        await Promise.all([
-          Account.updateOne(
-            { _id: existing.fromAccountId },
-            { $inc: { balance: -existing.appliedFromDelta } },
-            { session: mongoSession }
-          ),
-          Account.updateOne(
-            { _id: existing.toAccountId },
-            { $inc: { balance: -existing.appliedToDelta } },
-            { session: mongoSession }
-          ),
-        ]);
+        await Account.updateOne(
+          { _id: existing.fromAccountId },
+          { $inc: { balance: -existing.appliedFromDelta } },
+          { session: mongoSession }
+        );
+        await Account.updateOne(
+          { _id: existing.toAccountId },
+          { $inc: { balance: -existing.appliedToDelta } },
+          { session: mongoSession }
+        );
 
         await Transfer.deleteOne({ _id: id }, { session: mongoSession });
       });

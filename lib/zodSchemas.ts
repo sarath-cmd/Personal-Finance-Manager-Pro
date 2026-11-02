@@ -11,6 +11,7 @@ import {
   EVENT_TYPES,
   SAVINGS_GOAL_KINDS,
   DEBT_TYPES,
+  INVESTMENT_KINDS,
 } from "@/lib/constants";
 
 const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD");
@@ -233,6 +234,23 @@ export const savingsContributionPatchSchema = savingsContributionInputSchema.par
 
 export const savingsContributionQuerySchema = z.object({
   goalId: objectId.optional(),
+  month: monthQuerySchema,
+});
+
+// ---------- Investments (Gold / Silver / SIP) ----------
+
+export const investmentEntryInputSchema = z.object({
+  date: dateSchema,
+  kind: z.enum(INVESTMENT_KINDS),
+  amount: z.number().positive().max(1_000_000_000),
+  quantity: z.number().min(0).max(1_000_000_000).optional().nullable(),
+  note: z.string().trim().max(500).optional().default(""),
+});
+
+export const investmentEntryPatchSchema = investmentEntryInputSchema.partial();
+
+export const investmentEntryQuerySchema = z.object({
+  kind: z.enum(INVESTMENT_KINDS).optional(),
   month: monthQuerySchema,
 });
 

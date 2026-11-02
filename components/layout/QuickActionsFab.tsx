@@ -46,6 +46,14 @@ const ACTIONS: Action[] = [
     glow: "rgba(201, 161, 90, 0.35)",
   },
   {
+    key: "investment",
+    icon: "💰",
+    label: "Investment",
+    href: "/investments?new=1",
+    gradient: "linear-gradient(135deg, var(--gold-light), var(--gold-dark))",
+    glow: "rgba(201, 161, 90, 0.35)",
+  },
+  {
     key: "goal",
     icon: "🎯",
     label: "Savings Goal",

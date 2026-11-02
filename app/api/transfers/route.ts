@@ -53,10 +53,14 @@ export async function POST(req: NextRequest) {
       let accountNotFound = false;
 
       await mongoSession.withTransaction(async () => {
-        const [fromAccount, toAccount] = await Promise.all([
-          Account.findOne({ _id: input.fromAccountId, userId }, null, { session: mongoSession }),
-          Account.findOne({ _id: input.toAccountId, userId }, null, { session: mongoSession }),
-        ]);
+        // A single ClientSession can only have one operation in flight at a
+        // time, so these must run sequentially, not via Promise.all.
+        const fromAccount = await Account.findOne({ _id: input.fromAccountId, userId }, null, {
+          session: mongoSession,
+        });
+        const toAccount = await Account.findOne({ _id: input.toAccountId, userId }, null, {
+          session: mongoSession,
+        });
         if (!fromAccount || !toAccount) {
           accountNotFound = true;
           return;
@@ -65,10 +69,8 @@ export async function POST(req: NextRequest) {
         const fromDelta = txDelta({ type: "expense", amount: input.amount }, fromAccount);
         const toDelta = txDelta({ type: "income", amount: input.amount, status: "Received" }, toAccount);
 
-        await Promise.all([
-          Account.updateOne({ _id: fromAccount._id }, { $inc: { balance: fromDelta } }, { session: mongoSession }),
-          Account.updateOne({ _id: toAccount._id }, { $inc: { balance: toDelta } }, { session: mongoSession }),
-        ]);
+        await Account.updateOne({ _id: fromAccount._id }, { $inc: { balance: fromDelta } }, { session: mongoSession });
+        await Account.updateOne({ _id: toAccount._id }, { $inc: { balance: toDelta } }, { session: mongoSession });
 
         const [doc] = await Transfer.create(
           [

@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useState, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Modal from "@/components/ui/Modal";
 import PageHeader from "@/components/ui/PageHeader";
 import StatTile from "@/components/dashboard/StatTile";
+import { SkeletonTableRows } from "@/components/ui/Skeleton";
 import { formatCurrency, ACCOUNT_TYPES } from "@/lib/constants";
 
 const TYPE_ICON: Record<string, string> = {
@@ -23,7 +25,9 @@ type Account = {
   balance: number;
 };
 
-export default function AccountsPage() {
+function Inner() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -42,6 +46,16 @@ export default function AccountsPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data fetch on mount
     load();
   }, [load]);
+
+  useEffect(() => {
+    if (searchParams.get("new") === "1") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- opening the quick-add modal from a URL flag set by the global FAB
+      setEditing(null);
+      setShowModal(true);
+      router.replace("/accounts");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only run when the `new` param changes
+  }, [searchParams]);
 
   async function handleDelete(id: string) {
     if (!confirm("Delete this account?")) return;
@@ -87,10 +101,7 @@ export default function AccountsPage() {
       </div>
 
       <div className="card">
-        {loading ? (
-          <p className="text-text-tertiary text-sm italic">Loading…</p>
-        ) : (
-          <div className="overflow-x-auto">
+        <div className="overflow-x-auto">
           <table className="data-table">
             <thead>
               <tr>
@@ -102,14 +113,15 @@ export default function AccountsPage() {
               </tr>
             </thead>
             <tbody>
-              {accounts.length === 0 && (
+              {loading && <SkeletonTableRows rows={4} cols={5} />}
+              {!loading && accounts.length === 0 && (
                 <tr>
                   <td colSpan={5} className="text-center italic text-text-tertiary py-7">
                     No accounts yet.
                   </td>
                 </tr>
               )}
-              {accounts.map((a) => (
+              {!loading && accounts.map((a) => (
                 <tr key={a._id}>
                   <td className="font-semibold text-text-primary">
                     <div className="flex items-center gap-2.5">
@@ -149,8 +161,7 @@ export default function AccountsPage() {
               ))}
             </tbody>
           </table>
-          </div>
-        )}
+        </div>
       </div>
 
       {showModal && (
@@ -166,6 +177,14 @@ export default function AccountsPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function AccountsPage() {
+  return (
+    <Suspense>
+      <Inner />
+    </Suspense>
   );
 }
 

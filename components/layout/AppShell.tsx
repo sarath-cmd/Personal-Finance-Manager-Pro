@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Sidebar, { DEFAULT_SIDEBAR_WIDTH, MIN_SIDEBAR_WIDTH, MAX_SIDEBAR_WIDTH } from "./Sidebar";
 import Topbar from "./Topbar";
+import QuickActionsFab from "./QuickActionsFab";
 
 const STORAGE_KEY = "pfm-sidebar-width";
 
@@ -52,6 +53,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <Topbar onMenuClick={() => setSidebarOpen(true)} />
         <div className="p-4 sm:p-6 lg:p-8 flex-1 min-w-0">{children}</div>
       </div>
+      <QuickActionsFab />
     </div>
   );
 }

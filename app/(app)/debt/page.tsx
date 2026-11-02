@@ -1,11 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Modal from "@/components/ui/Modal";
 import PageHeader from "@/components/ui/PageHeader";
 import StatTile from "@/components/dashboard/StatTile";
 import ProgressBar from "@/components/ui/ProgressBar";
 import { formatCurrency, DEBT_TYPES } from "@/lib/constants";
+import { SkeletonCardGrid } from "@/components/ui/Skeleton";
 
 type Debt = {
   _id: string;
@@ -19,7 +21,9 @@ type Debt = {
   remainingBalance: number;
 };
 
-export default function DebtPage() {
+function Inner() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [debts, setDebts] = useState<Debt[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -38,6 +42,16 @@ export default function DebtPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data fetch on mount
     load();
   }, [load]);
+
+  useEffect(() => {
+    if (searchParams.get("new") === "1") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- opening the quick-add modal from a URL flag set by the global FAB
+      setEditing(null);
+      setShowModal(true);
+      router.replace("/debt");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only run when the `new` param changes
+  }, [searchParams]);
 
   async function handleDelete(id: string) {
     if (!confirm("Delete this debt and its payment history?")) return;
@@ -73,7 +87,7 @@ export default function DebtPage() {
       </div>
 
       {loading ? (
-        <p className="text-text-tertiary text-sm italic">Loading…</p>
+        <SkeletonCardGrid count={3} />
       ) : debts.length === 0 ? (
         <div className="card">
           <p className="text-text-tertiary italic text-sm">No debts recorded.</p>
@@ -145,6 +159,14 @@ export default function DebtPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function DebtPage() {
+  return (
+    <Suspense>
+      <Inner />
+    </Suspense>
   );
 }
 

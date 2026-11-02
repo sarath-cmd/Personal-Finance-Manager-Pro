@@ -7,6 +7,7 @@ import PageHeader from "@/components/ui/PageHeader";
 import StatTile from "@/components/dashboard/StatTile";
 import PersonCard, { type Person } from "@/components/lending/PersonCard";
 import AddPersonModal, { type Group } from "@/components/lending/AddPersonModal";
+import { SkeletonCardGrid, SkeletonPageHeader, SkeletonStatTile } from "@/components/ui/Skeleton";
 import { formatCurrency } from "@/lib/constants";
 
 type GroupWithTotals = Group & { note?: string; memberCount: number; totalPending: number };
@@ -72,7 +73,13 @@ export default function LendingGroupPage() {
       </Link>
 
       {loading || !group ? (
-        <p className="text-text-tertiary text-sm italic mt-4">Loading…</p>
+        <div className="mt-4">
+          <SkeletonPageHeader />
+          <div className="max-w-xs mb-6">
+            <SkeletonStatTile />
+          </div>
+          <SkeletonCardGrid count={3} />
+        </div>
       ) : (
         <>
           <div className="mt-4">

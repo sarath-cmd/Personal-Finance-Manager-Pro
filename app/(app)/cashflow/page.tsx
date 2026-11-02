@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import CashflowChart from "@/components/dashboard/CashflowChart";
 import PageHeader from "@/components/ui/PageHeader";
+import { Skeleton, SkeletonTable } from "@/components/ui/Skeleton";
 import { formatCurrency } from "@/lib/constants";
 
 type Point = { month: string; label: string; income: number; expense: number; net: number };
@@ -26,7 +27,7 @@ export default function CashflowPage() {
 
       <div className="card">
         {loading ? (
-          <p className="text-text-tertiary text-sm italic">Loading…</p>
+          <Skeleton className="rounded-xl" style={{ height: 300 }} />
         ) : (
           <div style={{ height: 300 }}>
             <CashflowChart series={series} />
@@ -34,7 +35,9 @@ export default function CashflowPage() {
         )}
       </div>
 
-      {!loading && (
+      {loading ? (
+        <SkeletonTable rows={6} cols={4} />
+      ) : (
         <div className="card">
           <h2 className="font-extrabold text-text-primary mb-5 flex items-center gap-2">
             <span className="icon-chip">🗓️</span>

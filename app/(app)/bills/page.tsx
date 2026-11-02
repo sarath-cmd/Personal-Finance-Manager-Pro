@@ -1,11 +1,12 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Modal from "@/components/ui/Modal";
 import PageHeader from "@/components/ui/PageHeader";
 import StatTile from "@/components/dashboard/StatTile";
 import { formatCurrency, BILL_FREQUENCIES } from "@/lib/constants";
+import { SkeletonTableRows } from "@/components/ui/Skeleton";
 
 type Account = { _id: string; name: string };
 type Bill = {
@@ -24,6 +25,7 @@ type Bill = {
 };
 
 function Inner() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const month = searchParams.get("month") ?? "";
 
@@ -54,6 +56,16 @@ function Inner() {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- data fetch synced to month
     load();
   }, [load]);
+
+  useEffect(() => {
+    if (searchParams.get("new") === "1") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- opening the quick-add modal from a URL flag set by the global FAB
+      setEditing(null);
+      setShowModal(true);
+      router.replace(month ? `/bills?month=${month}` : "/bills");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only run when the `new` param changes
+  }, [searchParams]);
 
   async function handlePay(id: string) {
     const res = await fetch(`/api/bills/${id}/pay`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) });
@@ -123,10 +135,7 @@ function Inner() {
       </div>
 
       <div className="card">
-        {loading ? (
-          <p className="text-text-tertiary text-sm italic">Loading…</p>
-        ) : (
-          <div className="overflow-x-auto">
+        <div className="overflow-x-auto">
           <table className="data-table">
             <thead>
               <tr>
@@ -139,14 +148,15 @@ function Inner() {
               </tr>
             </thead>
             <tbody>
-              {filtered.length === 0 && (
+              {loading && <SkeletonTableRows rows={5} cols={6} />}
+              {!loading && filtered.length === 0 && (
                 <tr>
                   <td colSpan={6} className="text-center italic text-text-tertiary py-7">
                     No bills yet.
                   </td>
                 </tr>
               )}
-              {filtered.map((b) => (
+              {!loading && filtered.map((b) => (
                 <tr key={b._id}>
                   <td className="font-semibold text-text-primary">
                     {b.name}
@@ -186,8 +196,7 @@ function Inner() {
               ))}
             </tbody>
           </table>
-          </div>
-        )}
+        </div>
       </div>
 
       {showModal && (

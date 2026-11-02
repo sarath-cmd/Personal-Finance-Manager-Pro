@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import PageHeader from "@/components/ui/PageHeader";
 import { TAG_PALETTE } from "@/lib/constants";
+import { SkeletonCard } from "@/components/ui/Skeleton";
 
 type Tag = { _id: string; kind: "expense" | "income"; name: string; color: string };
 
@@ -107,7 +108,10 @@ export default function TagsPage() {
       <PageHeader icon="🏷️" title="Tags" subtitle="Color-coded labels for income and expense transactions." />
 
       {loading ? (
-        <p className="text-text-tertiary text-sm italic">Loading…</p>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <SkeletonCard lines={3} />
+          <SkeletonCard lines={3} />
+        </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           <TagSection kind="expense" title="Expense Tags" tags={tags.filter((t) => t.kind === "expense")} onChanged={load} />

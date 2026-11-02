@@ -1,11 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import PageHeader from "@/components/ui/PageHeader";
 import StatTile from "@/components/dashboard/StatTile";
 import PaymentMethodIcon from "@/components/transactions/PaymentMethodIcon";
 import { formatCurrency, formatDate } from "@/lib/constants";
 import type { CalendarItem } from "@/components/calendar/MonthGrid";
+import { SkeletonCard, SkeletonStatRow } from "@/components/ui/Skeleton";
 
 type Transaction = {
   _id: string;
@@ -24,12 +26,15 @@ type TodayData = {
   netToday: number;
 };
 
-export default function TodayPage() {
+function Inner() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [data, setData] = useState<TodayData | null>(null);
   const [loading, setLoading] = useState(true);
   const [taskName, setTaskName] = useState("");
   const [taskDate, setTaskDate] = useState(new Date().toISOString().slice(0, 10));
   const [savingTask, setSavingTask] = useState(false);
+  const taskInputRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -43,6 +48,14 @@ export default function TodayPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data fetch on mount
     load();
   }, [load]);
+
+  useEffect(() => {
+    if (searchParams.get("new") === "1") {
+      taskInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      taskInputRef.current?.focus();
+      router.replace("/today");
+    }
+  }, [searchParams, router]);
 
   async function handleAddTask(e: React.FormEvent) {
     e.preventDefault();
@@ -74,7 +87,13 @@ export default function TodayPage() {
       <PageHeader icon="☀️" title="Today" subtitle={todayLabel} />
 
       {loading || !data ? (
-        <p className="text-text-tertiary text-sm italic">Loading…</p>
+        <>
+          <SkeletonStatRow count={3} cols={3} />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <SkeletonCard lines={4} />
+            <SkeletonCard lines={4} />
+          </div>
+        </>
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
@@ -185,6 +204,7 @@ export default function TodayPage() {
               <div className="flex-1 min-w-[200px]">
                 <label className="form-label">Task</label>
                 <input
+                  ref={taskInputRef}
                   className="form-input"
                   placeholder="e.g. Review monthly budget"
                   value={taskName}
@@ -204,5 +224,13 @@ export default function TodayPage() {
         </>
       )}
     </div>
+  );
+}
+
+export default function TodayPage() {
+  return (
+    <Suspense>
+      <Inner />
+    </Suspense>
   );
 }

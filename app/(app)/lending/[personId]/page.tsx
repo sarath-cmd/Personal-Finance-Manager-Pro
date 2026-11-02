@@ -5,6 +5,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Modal from "@/components/ui/Modal";
 import StatTile from "@/components/dashboard/StatTile";
+import { SkeletonPageHeader, SkeletonStatTile, SkeletonTable } from "@/components/ui/Skeleton";
 import { formatCurrency, formatDate, LENDING_ENTRY_TYPES } from "@/lib/constants";
 
 type Person = {
@@ -70,7 +71,13 @@ function Inner() {
       </Link>
 
       {loading || !person ? (
-        <p className="text-text-tertiary text-sm italic mt-4">Loading…</p>
+        <div className="mt-4">
+          <SkeletonPageHeader />
+          <div className="max-w-xs mb-6">
+            <SkeletonStatTile />
+          </div>
+          <SkeletonTable rows={5} cols={4} />
+        </div>
       ) : (
         <>
           <div className="flex items-start justify-between flex-wrap gap-4 mt-4 mb-6">

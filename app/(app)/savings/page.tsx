@@ -6,6 +6,7 @@ import Link from "next/link";
 import PageHeader from "@/components/ui/PageHeader";
 import StatTile from "@/components/dashboard/StatTile";
 import { formatCurrency, formatDate, SAVINGS_GOAL_KIND_LABELS } from "@/lib/constants";
+import { SkeletonTableRows } from "@/components/ui/Skeleton";
 
 type Contribution = { _id: string; goalId: string; date: string; amount: number; note?: string };
 type Goal = { _id: string; name: string; kind: keyof typeof SAVINGS_GOAL_KIND_LABELS; currentAmount: number; targetAmount: number };
@@ -67,10 +68,7 @@ function Inner() {
           <span className="icon-chip">📜</span>
           This Month&apos;s Contributions
         </h2>
-        {loading ? (
-          <p className="text-text-tertiary text-sm italic">Loading…</p>
-        ) : (
-          <div className="overflow-x-auto">
+        <div className="overflow-x-auto">
           <table className="data-table">
             <thead>
               <tr>
@@ -81,14 +79,15 @@ function Inner() {
               </tr>
             </thead>
             <tbody>
-              {contributions.length === 0 && (
+              {loading && <SkeletonTableRows rows={4} cols={4} />}
+              {!loading && contributions.length === 0 && (
                 <tr>
                   <td colSpan={4} className="text-center italic text-text-tertiary py-7">
                     Nothing contributed this month yet.
                   </td>
                 </tr>
               )}
-              {contributions.map((c) => (
+              {!loading && contributions.map((c) => (
                 <tr key={c._id}>
                   <td>{formatDate(c.date)}</td>
                   <td className="font-semibold text-text-primary">{goalById.get(c.goalId)?.name ?? "—"}</td>
@@ -98,8 +97,7 @@ function Inner() {
               ))}
             </tbody>
           </table>
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );

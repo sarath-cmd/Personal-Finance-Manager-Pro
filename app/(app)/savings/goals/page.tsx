@@ -1,11 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Modal from "@/components/ui/Modal";
 import PageHeader from "@/components/ui/PageHeader";
 import ProgressBar from "@/components/ui/ProgressBar";
 import { formatCurrency, SAVINGS_GOAL_KINDS, SAVINGS_GOAL_KIND_LABELS } from "@/lib/constants";
+import { SkeletonCardGrid } from "@/components/ui/Skeleton";
 
 type Goal = {
   _id: string;
@@ -17,7 +19,9 @@ type Goal = {
   note?: string;
 };
 
-export default function SavingsGoalsPage() {
+function Inner() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true);
   const [kindFilter, setKindFilter] = useState<"all" | (typeof SAVINGS_GOAL_KINDS)[number]>("all");
@@ -37,6 +41,16 @@ export default function SavingsGoalsPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data fetch on mount
     load();
   }, [load]);
+
+  useEffect(() => {
+    if (searchParams.get("new") === "1") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- opening the quick-add modal from a URL flag set by the global FAB
+      setEditingGoal(null);
+      setShowGoalModal(true);
+      router.replace("/savings/goals");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only run when the `new` param changes
+  }, [searchParams]);
 
   async function handleDelete(id: string) {
     if (!confirm("Delete this goal and its contribution history?")) return;
@@ -93,7 +107,7 @@ export default function SavingsGoalsPage() {
       </div>
 
       {loading ? (
-        <p className="text-text-tertiary text-sm italic">Loading…</p>
+        <SkeletonCardGrid count={3} />
       ) : filtered.length === 0 ? (
         <div className="card">
           <p className="text-text-tertiary italic text-sm">No goals yet.</p>
@@ -164,6 +178,14 @@ export default function SavingsGoalsPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function SavingsGoalsPage() {
+  return (
+    <Suspense>
+      <Inner />
+    </Suspense>
   );
 }
 

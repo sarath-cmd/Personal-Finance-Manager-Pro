@@ -6,6 +6,7 @@ import { formatCurrency, formatDate } from "@/lib/constants";
 import TransactionFormModal, { type Account, type Transaction } from "@/components/transactions/TransactionFormModal";
 import PaymentMethodIcon from "@/components/transactions/PaymentMethodIcon";
 import PageHeader from "@/components/ui/PageHeader";
+import { SkeletonTableRows } from "@/components/ui/Skeleton";
 
 function TransactionsInner() {
   const searchParams = useSearchParams();
@@ -83,10 +84,7 @@ function TransactionsInner() {
           </select>
         </div>
 
-        {loading ? (
-          <p className="text-text-tertiary text-sm italic">Loading…</p>
-        ) : (
-          <div className="overflow-x-auto">
+        <div className="overflow-x-auto">
           <table className="data-table">
             <thead>
               <tr>
@@ -99,14 +97,15 @@ function TransactionsInner() {
               </tr>
             </thead>
             <tbody>
-              {transactions.length === 0 && (
+              {loading && <SkeletonTableRows rows={6} cols={6} />}
+              {!loading && transactions.length === 0 && (
                 <tr>
                   <td colSpan={6} className="text-center italic text-text-tertiary py-7">
                     No transactions for this month yet.
                   </td>
                 </tr>
               )}
-              {transactions.map((t) => (
+              {!loading && transactions.map((t) => (
                 <tr key={t._id}>
                   <td>{formatDate(t.date)}</td>
                   <td className="font-semibold text-text-primary">
@@ -143,8 +142,7 @@ function TransactionsInner() {
               ))}
             </tbody>
           </table>
-          </div>
-        )}
+        </div>
       </div>
 
       {showModal && (

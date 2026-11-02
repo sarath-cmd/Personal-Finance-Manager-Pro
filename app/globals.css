@@ -73,6 +73,23 @@
   box-sizing: border-box;
 }
 
+@keyframes skeleton-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes fab-pop {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 html,
 body {
   background: var(--light-bg);
@@ -496,5 +513,39 @@ body {
     .modal-box {
       padding: 1.75rem;
     }
+  }
+
+  .skeleton {
+    position: relative;
+    overflow: hidden;
+    background: var(--border-color);
+    border-radius: 6px;
+    opacity: 0.55;
+  }
+  .skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.35),
+      transparent
+    );
+    animation: skeleton-shimmer 1.6s ease-in-out infinite;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .skeleton::after {
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.08),
+        transparent
+      );
+    }
+  }
+  :root[data-theme="dark"] .skeleton::after {
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
   }
 }

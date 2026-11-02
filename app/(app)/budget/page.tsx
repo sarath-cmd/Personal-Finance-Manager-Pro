@@ -7,6 +7,7 @@ import PageHeader from "@/components/ui/PageHeader";
 import StatTile from "@/components/dashboard/StatTile";
 import ProgressBar from "@/components/ui/ProgressBar";
 import { formatCurrency } from "@/lib/constants";
+import { SkeletonForm } from "@/components/ui/Skeleton";
 
 type Category = { _id: string; name: string };
 type BudgetEntry = { category: string; amount: number };
@@ -89,7 +90,7 @@ function Inner() {
       </div>
 
       {loading ? (
-        <p className="text-text-tertiary text-sm italic">Loading…</p>
+        <SkeletonForm fields={5} />
       ) : categories.length === 0 ? (
         <div className="card">
           <p className="text-text-tertiary text-sm italic">

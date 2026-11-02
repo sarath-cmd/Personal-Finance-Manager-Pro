@@ -1,17 +1,21 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import PageHeader from "@/components/ui/PageHeader";
 import StatTile from "@/components/dashboard/StatTile";
 import PersonCard, { type Person } from "@/components/lending/PersonCard";
 import AddPersonModal, { type Group } from "@/components/lending/AddPersonModal";
 import AddGroupModal from "@/components/lending/AddGroupModal";
+import { SkeletonCardGrid } from "@/components/ui/Skeleton";
 import { formatCurrency } from "@/lib/constants";
 
 type GroupWithTotals = Group & { note?: string; memberCount: number; totalPending: number };
 
-export default function LendingPage() {
+function Inner() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [people, setPeople] = useState<Person[]>([]);
   const [groups, setGroups] = useState<GroupWithTotals[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,6 +39,15 @@ export default function LendingPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data fetch on mount
     load();
   }, [load]);
+
+  useEffect(() => {
+    if (searchParams.get("new") === "1") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- opening the quick-add modal from a URL flag set by the global FAB
+      setShowPersonModal(true);
+      router.replace("/lending");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only run when the `new` param changes
+  }, [searchParams]);
 
   async function handleDeletePerson(id: string) {
     if (!confirm("Delete this person and all their lending history?")) return;
@@ -74,7 +87,7 @@ export default function LendingPage() {
       </div>
 
       {loading ? (
-        <p className="text-text-tertiary text-sm italic">Loading…</p>
+        <SkeletonCardGrid count={3} />
       ) : people.length === 0 && groups.length === 0 ? (
         <div className="card">
           <p className="text-text-tertiary italic text-sm">No one added yet.</p>
@@ -126,5 +139,13 @@ export default function LendingPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function LendingPage() {
+  return (
+    <Suspense>
+      <Inner />
+    </Suspense>
   );
 }

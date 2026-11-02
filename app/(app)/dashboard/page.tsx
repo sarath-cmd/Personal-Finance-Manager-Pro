@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import StatTile from "@/components/dashboard/StatTile";
 import PaymentMethodIcon from "@/components/transactions/PaymentMethodIcon";
 import PageHeader from "@/components/ui/PageHeader";
+import { SkeletonStatRow, SkeletonTable } from "@/components/ui/Skeleton";
 import { formatCurrency, formatDate } from "@/lib/constants";
 
 type Summary = {
@@ -34,13 +35,21 @@ function DashboardInner() {
   const month = searchParams.get("month") ?? "";
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
+    setError(null);
     const params = new URLSearchParams();
     if (month) params.set("month", month);
     const res = await fetch(`/api/dashboard/summary?${params.toString()}`);
-    const data = await res.json();
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data || !Array.isArray(data.recentTransactions)) {
+      setSummary(null);
+      setError(data?.error || "Could not load the dashboard. Please try again.");
+      setLoading(false);
+      return;
+    }
     setSummary(data);
     setLoading(false);
   }, [month]);
@@ -58,8 +67,15 @@ function DashboardInner() {
         subtitle="See your money, accounts and lending in one place."
       />
 
-      {loading || !summary ? (
-        <p className="text-text-tertiary text-sm italic">Loading…</p>
+      {error ? (
+        <div className="card">
+          <p className="text-sm text-danger font-semibold">{error}</p>
+        </div>
+      ) : loading || !summary ? (
+        <>
+          <SkeletonStatRow count={10} />
+          <SkeletonTable rows={6} cols={5} />
+        </>
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

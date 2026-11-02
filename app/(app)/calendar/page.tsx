@@ -6,6 +6,7 @@ import PageHeader from "@/components/ui/PageHeader";
 import MonthGrid, { type CalendarItem } from "@/components/calendar/MonthGrid";
 import { formatCurrency, formatDate, EVENT_TYPES } from "@/lib/constants";
 import { getActiveMonth, monthLabel } from "@/lib/month";
+import { SkeletonCalendar } from "@/components/ui/Skeleton";
 
 const KIND_LABELS: Record<CalendarItem["kind"], string> = {
   bill: "Bill",
@@ -40,10 +41,14 @@ function Inner() {
     <div>
       <PageHeader icon="📅" title="Financial Calendar" subtitle="Bills, subscriptions, debt payments and tasks by date." />
 
-      <div className="card">
-        <h2 className="font-extrabold text-text-primary mb-5">{monthLabel(month)}</h2>
-        {loading ? <p className="text-text-tertiary text-sm italic">Loading…</p> : <MonthGrid month={month} items={items} />}
-      </div>
+      {loading ? (
+        <SkeletonCalendar />
+      ) : (
+        <div className="card">
+          <h2 className="font-extrabold text-text-primary mb-5">{monthLabel(month)}</h2>
+          <MonthGrid month={month} items={items} />
+        </div>
+      )}
 
       <div className="card">
         <h2 className="font-extrabold text-text-primary mb-5 flex items-center gap-2">

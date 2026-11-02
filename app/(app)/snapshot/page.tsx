@@ -6,6 +6,7 @@ import PageHeader from "@/components/ui/PageHeader";
 import StatTile from "@/components/dashboard/StatTile";
 import { formatCurrency } from "@/lib/constants";
 import { getActiveMonth, monthLabel } from "@/lib/month";
+import { SkeletonForm, SkeletonStatRow } from "@/components/ui/Skeleton";
 
 type Snapshot = {
   income: number;
@@ -64,7 +65,11 @@ function Inner() {
       />
 
       {loading || !snap ? (
-        <p className="text-text-tertiary text-sm italic">Loading…</p>
+        <>
+          <SkeletonStatRow count={8} />
+          <SkeletonForm fields={4} />
+          <SkeletonForm fields={2} />
+        </>
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

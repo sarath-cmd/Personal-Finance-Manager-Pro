@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import PageHeader from "@/components/ui/PageHeader";
+import { SkeletonCard } from "@/components/ui/Skeleton";
 
 type Category = { _id: string; kind: "expense" | "income"; name: string };
 
@@ -119,7 +120,10 @@ export default function BudgetCategoriesPage() {
       </Link>
 
       {loading ? (
-        <p className="text-text-tertiary text-sm italic">Loading…</p>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <SkeletonCard lines={4} />
+          <SkeletonCard lines={4} />
+        </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           <CategorySection

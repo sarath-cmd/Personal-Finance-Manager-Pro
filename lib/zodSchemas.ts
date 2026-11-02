@@ -5,6 +5,7 @@ import {
   INCOME_STATUSES,
   CLASSIFICATIONS,
   LENDING_ENTRY_TYPES,
+  PAYMENT_METHODS,
   TAG_KINDS,
   BILL_FREQUENCIES,
   EVENT_TYPES,
@@ -65,6 +66,7 @@ export const transactionInputSchema = z.object({
   category: z.string().trim().min(1).max(100),
   accountId: objectId.optional().nullable(),
   tags: z.array(z.string().trim().min(1).max(40)).max(20).optional().default([]),
+  paymentMethod: z.enum(PAYMENT_METHODS).optional().nullable(),
   status: z.enum(INCOME_STATUSES).optional(),
   classification: z.enum(CLASSIFICATIONS).optional(),
 });
@@ -77,9 +79,17 @@ export const transactionQuerySchema = z.object({
   category: z.string().trim().max(100).optional(),
 });
 
+export const lendingGroupInputSchema = z.object({
+  name: z.string().trim().min(1).max(100),
+  note: z.string().trim().max(500).optional().default(""),
+});
+
+export const lendingGroupPatchSchema = lendingGroupInputSchema.partial();
+
 export const lendingPersonInputSchema = z.object({
   name: z.string().trim().min(1).max(100),
   note: z.string().trim().max(500).optional().default(""),
+  groupId: objectId.optional().nullable(),
 });
 
 export const lendingPersonPatchSchema = lendingPersonInputSchema.partial();

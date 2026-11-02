@@ -3,10 +3,18 @@
 import { useCallback, useEffect, useState } from "react";
 import PageHeader from "@/components/ui/PageHeader";
 import StatTile from "@/components/dashboard/StatTile";
+import PaymentMethodIcon from "@/components/transactions/PaymentMethodIcon";
 import { formatCurrency, formatDate } from "@/lib/constants";
 import type { CalendarItem } from "@/components/calendar/MonthGrid";
 
-type Transaction = { _id: string; description: string; category: string; amount: number; type: string };
+type Transaction = {
+  _id: string;
+  description: string;
+  category: string;
+  amount: number;
+  type: string;
+  paymentMethod?: string | null;
+};
 
 type TodayData = {
   date: string;
@@ -105,7 +113,10 @@ export default function TodayPage() {
                   )}
                   {data.transactions.map((t) => (
                     <tr key={t._id}>
-                      <td className="font-semibold text-text-primary">{t.description}</td>
+                      <td className="font-semibold text-text-primary">
+                        {t.description}
+                        <PaymentMethodIcon method={t.paymentMethod} />
+                      </td>
                       <td>{t.category}</td>
                       <td className={t.type === "income" ? "font-bold text-success" : "font-bold text-danger"}>
                         {t.type === "income" ? "+" : "-"}

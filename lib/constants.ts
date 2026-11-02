@@ -14,6 +14,30 @@ export const INCOME_STATUSES = ["Received", "Pending"] as const;
 export const CLASSIFICATIONS = ["Need", "Want", "Unclassified"] as const;
 export const LENDING_ENTRY_TYPES = ["lent", "returned"] as const;
 
+export const PAYMENT_METHODS = [
+  "Cash",
+  "UPI",
+  "Debit Card",
+  "Credit Card",
+  "Bank Transfer",
+  "ATM Withdrawal",
+  "Net Banking",
+  "Cheque",
+  "Other",
+] as const;
+
+export const PAYMENT_METHOD_ICONS: Record<(typeof PAYMENT_METHODS)[number], string> = {
+  Cash: "💵",
+  UPI: "📱",
+  "Debit Card": "💳",
+  "Credit Card": "💳",
+  "Bank Transfer": "🏦",
+  "ATM Withdrawal": "🏧",
+  "Net Banking": "💻",
+  Cheque: "🧾",
+  Other: "🔘",
+};
+
 export const TAG_KINDS = ["expense", "income"] as const;
 export const BILL_FREQUENCIES = ["Monthly", "Quarterly", "Yearly"] as const;
 export const EVENT_TYPES = ["Recurring", "One-time", "Income"] as const;

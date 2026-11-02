@@ -4,6 +4,7 @@ import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { formatCurrency, formatDate } from "@/lib/constants";
 import TransactionFormModal, { type Account, type Transaction } from "@/components/transactions/TransactionFormModal";
+import PaymentMethodIcon from "@/components/transactions/PaymentMethodIcon";
 import PageHeader from "@/components/ui/PageHeader";
 import StatTile from "@/components/dashboard/StatTile";
 
@@ -157,7 +158,10 @@ function Inner({
               {transactions.map((t) => (
                 <tr key={t._id}>
                   <td>{formatDate(t.date)}</td>
-                  <td className="font-semibold text-text-primary">{t.description}</td>
+                  <td className="font-semibold text-text-primary">
+                    {t.description}
+                    <PaymentMethodIcon method={t.paymentMethod} />
+                  </td>
                   <td>{t.category}</td>
                   <td className={type === "income" ? "font-bold text-success" : "font-bold text-danger"}>
                     {formatCurrency(t.amount)}

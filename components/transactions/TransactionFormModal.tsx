@@ -8,6 +8,8 @@ import {
   INCOME_CATEGORIES,
   INCOME_STATUSES,
   CLASSIFICATIONS,
+  PAYMENT_METHODS,
+  PAYMENT_METHOD_ICONS,
 } from "@/lib/constants";
 
 export type Account = { _id: string; name: string; type: string };
@@ -21,6 +23,7 @@ export type Transaction = {
   category: string;
   accountId: string | null;
   tags: string[];
+  paymentMethod?: string | null;
   status?: string;
   classification?: string;
 };
@@ -48,6 +51,7 @@ export default function TransactionFormModal({
     transaction?.category ?? (defaultType === "income" ? INCOME_CATEGORIES[0] : DEFAULT_CATEGORIES[0])
   );
   const [accountId, setAccountId] = useState(transaction?.accountId ?? "");
+  const [paymentMethod, setPaymentMethod] = useState(transaction?.paymentMethod ?? "");
   const [status, setStatus] = useState(transaction?.status ?? "Received");
   const [classification, setClassification] = useState(transaction?.classification ?? "Unclassified");
   const [tags, setTags] = useState<string[]>(transaction?.tags ?? []);
@@ -81,6 +85,7 @@ export default function TransactionFormModal({
       category,
       accountId: accountId || null,
       tags,
+      paymentMethod: paymentMethod || null,
     };
     if (type === "income") payload.status = status;
     if (type === "expense") payload.classification = classification;
@@ -184,6 +189,27 @@ export default function TransactionFormModal({
               </option>
             ))}
           </select>
+        </div>
+
+        <div className="mb-4">
+          <label className="form-label">Payment Method (optional)</label>
+          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+            {PAYMENT_METHODS.map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setPaymentMethod(paymentMethod === m ? "" : m)}
+                className={`flex flex-col items-center justify-center gap-1 rounded-lg border py-2.5 text-[0.7rem] font-semibold transition-colors ${
+                  paymentMethod === m
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border-color text-text-secondary hover:border-text-tertiary"
+                }`}
+              >
+                <span className="text-base leading-none">{PAYMENT_METHOD_ICONS[m]}</span>
+                {m}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="mb-4">

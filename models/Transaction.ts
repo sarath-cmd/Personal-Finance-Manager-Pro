@@ -1,7 +1,7 @@
 import { Schema, model, models, Types, type InferSchemaType } from "mongoose";
-import { TRANSACTION_TYPES, INCOME_STATUSES, CLASSIFICATIONS } from "@/lib/constants";
+import { TRANSACTION_TYPES, INCOME_STATUSES, CLASSIFICATIONS, PAYMENT_METHODS } from "@/lib/constants";
 
-export { TRANSACTION_TYPES, INCOME_STATUSES, CLASSIFICATIONS };
+export { TRANSACTION_TYPES, INCOME_STATUSES, CLASSIFICATIONS, PAYMENT_METHODS };
 
 const transactionSchema = new Schema(
   {
@@ -14,6 +14,7 @@ const transactionSchema = new Schema(
     accountId: { type: Schema.Types.ObjectId, ref: "Account", default: null },
     billId: { type: Schema.Types.ObjectId, ref: "Bill", default: null },
     tags: { type: [String], default: [] },
+    paymentMethod: { type: String, enum: PAYMENT_METHODS },
     status: { type: String, enum: INCOME_STATUSES, default: "Received" },
     classification: {
       type: String,

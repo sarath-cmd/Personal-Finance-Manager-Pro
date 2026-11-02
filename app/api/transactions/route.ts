@@ -7,6 +7,7 @@ import { requireSession, UnauthorizedError, unauthorizedResponse } from "@/lib/s
 import { transactionInputSchema, transactionQuerySchema } from "@/lib/zodSchemas";
 import { getActiveMonth, monthToUtcRange } from "@/lib/month";
 import { txDelta } from "@/lib/balance";
+import { ensureTagsExist } from "@/lib/tags";
 
 export async function GET(req: NextRequest) {
   try {
@@ -57,6 +58,11 @@ export async function POST(req: NextRequest) {
     const input = parsed.data;
 
     await dbConnect();
+
+    if (input.tags?.length) {
+      await ensureTagsExist(userId, input.type, input.tags);
+    }
+
     const mongoSession = await mongoose.startSession();
 
     try {
@@ -100,6 +106,7 @@ export async function POST(req: NextRequest) {
               category: input.category,
               accountId: input.accountId ?? null,
               tags: input.tags ?? [],
+              paymentMethod: input.paymentMethod ?? undefined,
               status: input.type === "income" ? input.status ?? "Received" : undefined,
               classification: input.type === "expense" ? input.classification ?? "Unclassified" : undefined,
               appliedDelta,

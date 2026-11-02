@@ -7,7 +7,14 @@ import Modal from "@/components/ui/Modal";
 import StatTile from "@/components/dashboard/StatTile";
 import { formatCurrency, formatDate, LENDING_ENTRY_TYPES } from "@/lib/constants";
 
-type Person = { _id: string; name: string; lent: number; returned: number; balance: number };
+type Person = {
+  _id: string;
+  name: string;
+  lent: number;
+  returned: number;
+  balance: number;
+  groupId?: string | null;
+};
 type Entry = { _id: string; date: string; type: "lent" | "returned"; amount: number; note?: string };
 
 function Inner() {
@@ -55,8 +62,11 @@ function Inner() {
 
   return (
     <div>
-      <Link href="/lending" className="text-sm text-primary font-semibold">
-        ‹ Back to Lent &amp; Borrowed
+      <Link
+        href={person?.groupId ? `/lending/group/${person.groupId}` : "/lending"}
+        className="text-sm text-primary font-semibold"
+      >
+        ‹ Back to {person?.groupId ? "Group" : "Lent & Borrowed"}
       </Link>
 
       {loading || !person ? (

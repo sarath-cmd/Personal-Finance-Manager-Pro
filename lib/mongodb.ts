@@ -15,6 +15,13 @@ export function dbConnect(): Promise<typeof mongoose> {
     global._mongooseConn = mongoose.connect(MONGODB_URI, {
       bufferCommands: false,
     });
+    // If the connection attempt fails, don't leave the rejected promise
+    // cached — every future request would just re-await the same failure
+    // forever (until the server restarts). Clearing it lets the next call
+    // retry fresh instead of being permanently stuck after one bad blip.
+    global._mongooseConn.catch(() => {
+      global._mongooseConn = undefined;
+    });
   }
 
   return global._mongooseConn;

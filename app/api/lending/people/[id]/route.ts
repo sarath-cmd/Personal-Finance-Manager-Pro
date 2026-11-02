@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { dbConnect } from "@/lib/mongodb";
 import { LendingPerson } from "@/models/LendingPerson";
 import { LendingEntry } from "@/models/LendingEntry";
+import { LendingGroup } from "@/models/LendingGroup";
 import { requireSession, UnauthorizedError, unauthorizedResponse } from "@/lib/session";
 import { lendingPersonPatchSchema, objectId } from "@/lib/zodSchemas";
 
@@ -26,6 +27,14 @@ export async function PATCH(
     }
 
     await dbConnect();
+
+    if (parsed.data.groupId) {
+      const group = await LendingGroup.findOne({ _id: parsed.data.groupId, userId }).lean();
+      if (!group) {
+        return NextResponse.json({ error: "Group not found" }, { status: 400 });
+      }
+    }
+
     const person = await LendingPerson.findOneAndUpdate(
       { _id: id, userId },
       { $set: parsed.data },

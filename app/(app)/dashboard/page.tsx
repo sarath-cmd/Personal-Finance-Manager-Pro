@@ -3,6 +3,7 @@
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import StatTile from "@/components/dashboard/StatTile";
+import PaymentMethodIcon from "@/components/transactions/PaymentMethodIcon";
 import PageHeader from "@/components/ui/PageHeader";
 import { formatCurrency, formatDate } from "@/lib/constants";
 
@@ -24,6 +25,7 @@ type Summary = {
     category: string;
     amount: number;
     type: string;
+    paymentMethod?: string | null;
   }[];
 };
 
@@ -105,7 +107,10 @@ function DashboardInner() {
                 {summary.recentTransactions.map((t) => (
                   <tr key={t._id}>
                     <td>{formatDate(t.date)}</td>
-                    <td className="font-semibold text-text-primary">{t.description}</td>
+                    <td className="font-semibold text-text-primary">
+                      {t.description}
+                      <PaymentMethodIcon method={t.paymentMethod} />
+                    </td>
                     <td>{t.category}</td>
                     <td className={t.type === "income" ? "font-bold text-success" : "font-bold text-danger"}>
                       {t.type === "income" ? "+" : "-"}

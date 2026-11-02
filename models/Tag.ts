@@ -14,6 +14,7 @@ const tagSchema = new Schema(
 );
 
 tagSchema.index({ userId: 1, kind: 1 });
+tagSchema.index({ userId: 1, kind: 1, name: 1 }, { unique: true });
 
 export type TagDoc = InferSchemaType<typeof tagSchema> & { _id: Types.ObjectId };
 

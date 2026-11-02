@@ -6,6 +6,7 @@ import { Transaction } from "@/models/Transaction";
 import { requireSession, UnauthorizedError, unauthorizedResponse } from "@/lib/session";
 import { transactionPatchSchema, objectId } from "@/lib/zodSchemas";
 import { txDelta } from "@/lib/balance";
+import { ensureTagsExist } from "@/lib/tags";
 
 export async function PATCH(
   req: NextRequest,
@@ -62,9 +63,14 @@ export async function PATCH(
           accountId:
             patch.accountId !== undefined ? patch.accountId : existing.accountId,
           tags: patch.tags ?? existing.tags,
+          paymentMethod: patch.paymentMethod !== undefined ? patch.paymentMethod : existing.paymentMethod,
           status: patch.status ?? existing.status,
           classification: patch.classification ?? existing.classification,
         };
+
+        if (patch.tags?.length) {
+          await ensureTagsExist(userId, merged.type, patch.tags);
+        }
 
         let appliedDelta = 0;
         let appliedAccountId: string | null = null;

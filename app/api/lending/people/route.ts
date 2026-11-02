@@ -3,6 +3,7 @@ import { Types } from "mongoose";
 import { dbConnect } from "@/lib/mongodb";
 import { LendingPerson } from "@/models/LendingPerson";
 import { LendingEntry } from "@/models/LendingEntry";
+import { LendingGroup } from "@/models/LendingGroup";
 import { requireSession, UnauthorizedError, unauthorizedResponse } from "@/lib/session";
 import { lendingPersonInputSchema } from "@/lib/zodSchemas";
 
@@ -55,6 +56,14 @@ export async function POST(req: NextRequest) {
     }
 
     await dbConnect();
+
+    if (parsed.data.groupId) {
+      const group = await LendingGroup.findOne({ _id: parsed.data.groupId, userId }).lean();
+      if (!group) {
+        return NextResponse.json({ error: "Group not found" }, { status: 400 });
+      }
+    }
+
     const person = await LendingPerson.create({ ...parsed.data, userId });
     return NextResponse.json({ person: { ...person.toObject(), lent: 0, returned: 0, balance: 0 } }, { status: 201 });
   } catch (err) {
